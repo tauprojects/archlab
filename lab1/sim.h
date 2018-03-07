@@ -1,8 +1,6 @@
 /*
- * asm.h
+ * sim.h
  *
- *  Created on: May 12, 2017
- *      Author: user
  */
 
 #ifndef MAIN_H_
@@ -18,7 +16,7 @@
 #define MEM_SIZE (1 << 16)
 
 //Number of internal registers
-#define NUM_REGS  16
+#define NUM_REGS  8
 
 //Word size - 32 bit
 #define BIT_SIZE (1 << 4)

@@ -1,7 +1,5 @@
 /*
- Created By: Matan Gizunterman, Roie Ben Simon
- TAU Username: gizunterman, Roieben
- ID number: 303157804, 038196309
+ Created By: Matan Gizunterman, Almog Zeltsman
  Part of the code was with the help of given examples code, StackOverflow Issues, and Tutorials Point C Programming Guide
  */
 
@@ -12,19 +10,19 @@
 int mem[MEM_SIZE];
 //Registers
 int reg_list[NUM_REGS];
-char str1[20];
 // opcode names
-char op_name[][10] = { "add", "sub", "and", "or", "sll", "sra", "srl", "beq",
-		"bgt", "ble", "bne", "jal", "lw", "sw", "lhi", "halt" };
+char op_name[][10] = { "ADD", "SUB", "LSF", "RSF", "AND", "OR","XOR","LHI",
+		 "LD", "ST","JLT","JLE","JEQ", "JNE", "JIN", "HLT" };
 
 // register names
-char reg_name[][10] = { "$zero", "$imm", "$v0", "$a0", "$a1", "$t0", "$t1", "$t2", "$t3", "$s0", "$s1", "$s2", "$gp", "$sp", "$fp", "$ra" };
+char reg_name[][10] = {"$r0","$r1","$r2","$r3","$r4","$r5","$r6","$r7"};
 
-int inst, op, rd, rs, rt, imm, PC, instCnt = 0; //global variables - for easy modeling
+int inst, op, rd, rs, rt, PC, instCnt = 0; //global variables - for easy modeling
 
 // files to be read\written
 FILE *fp_memin, *fp_memout, *fp_regout, *fp_trace, *fp_count;
 
+short int imm;
 
 //Main function
 int main(int argc, char *argv[]) {
@@ -47,14 +45,9 @@ int main(int argc, char *argv[]) {
 	//Memory Map output file path
 	char* memoutPath = argv[2];
 
-	//Registers program output file path
-	char* regoutPath = argv[3];
-
 	//Trace output file path
-	char* tracePath = argv[4];
+	char* tracePath = argv[3];
 
-	//Operations count file path
-	char* countPath = argv[5];
 
 	//Opening files and validating return value for success
 	fp_memin = fopen(meminPath, "rt");
@@ -71,7 +64,6 @@ int main(int argc, char *argv[]) {
 		puts("trace.txt");
 		exit(-1);
 	}
-
 
 	//Initial Memory to zero
 	memset(mem, 0, MEM_SIZE * sizeof(int));
@@ -103,12 +95,12 @@ int main(int argc, char *argv[]) {
 		if (inst != 0) {
 
 			//Decode Stage
-			op = sbs(inst, 31, 28);
-			rd = sbs(inst, 27, 24);
-			rs = sbs(inst, 23, 20);
-			rt = sbs(inst, 19, 16);
+			op = sbs(inst, 29, 25);
+			rd = sbs(inst, 24, 22);
+			rs = sbs(inst, 21, 19);
+			rt = sbs(inst, 18, 16);
 			imm = sbs(inst, 15, 0);
-			reg_list[1] = (short) imm;
+			reg_list[1] = imm; //load imm to $r1
 
 			if (op == 0 && rd == 0) {
 				PC++;
@@ -116,9 +108,6 @@ int main(int argc, char *argv[]) {
 
 				//Instruction Counter Increment
 				instCnt++;
-
-				//Print count.txt
-				printCount(countPath);
 
 				//Print trace.txt
 				printTrace(PC, inst);
@@ -129,8 +118,6 @@ int main(int argc, char *argv[]) {
 				//Printing memout.txt
 				printMemout(memoutPath);
 
-				//Printing register state
-				printRegout(regoutPath);
 			}
 		}
 		else{
@@ -145,94 +132,94 @@ int main(int argc, char *argv[]) {
 void instExec() {
 	unsigned int temp;
 	switch (op) {
-	case 0:		 //$add
+	case 0:		 //$ADD
 		reg_list[rd] = reg_list[rs] + reg_list[rt];
 		PC++;
 		break;
 
-	case 1:		//$sub
+	case 1:		//$SUB
 		reg_list[rd] = reg_list[rs] - reg_list[rt];
 		PC++;
 		break;
-
-	case 2:		//$and
-		reg_list[rd] = reg_list[rs] & reg_list[rt];
-		PC++;
-		break;
-
-	case 3:		//$or
-		reg_list[rd] = reg_list[rs] | reg_list[rt];
-		PC++;
-		break;
-
-	case 4:		//$sll
+		
+	case 2:		//$LSF
 		reg_list[rd] = logicalLeftShift(reg_list[rs], reg_list[rt]);
 		PC++;
 		break;
 
-	case 5:		//$sra
+	case 3:		//$RSF
 		reg_list[rd] = arithmeticRightShift(reg_list[rs], reg_list[rt]);
 		PC++;
 		break;
 
-	case 6:		//$srl
-		reg_list[rd] = logicalRightShift(reg_list[rs], reg_list[rt]);
+	case 4:		//$AND
+		reg_list[rd] = reg_list[rs] & reg_list[rt];
 		PC++;
 		break;
 
-	case 7:		//$beq
-		if (reg_list[rs] == reg_list[rt]) {
-			PC = (reg_list[rd] & 0x0000FFFF) - 1; //if (R[rs] == R[rt]) pc = R[rd][low bits 15:0]
-		}
+	case 5:		//$OR
+		reg_list[rd] = reg_list[rs] | reg_list[rt];
 		PC++;
 		break;
 
-	case 8:		//$bgt
-
-		if (reg_list[rs] > reg_list[rt]) {
-			PC = (reg_list[rd] & 0x0000FFFF) - 1; //if (R[rs] > R[rt]) pc = R[rd][low bits 15:0]
-		}
+	case 6:		//$XOR
+		reg_list[rd] = reg_list[rs] ^ reg_list[rt];
 		PC++;
 		break;
-
-	case 9:		//$ble
-		if (reg_list[rs] <= reg_list[rt]) {
-			PC = (reg_list[rd] & 0x0000FFFF) - 1; //if (R[rs] <= R[rt]) pc = R[rd] [low bits 15:0]
-
-		}
+		
+	case 7:	//$LHI
+		temp = ((int)imm & 0x0000FFFF) << 16;
+		reg_list[rd] = (reg_list[rd] & 0x0000FFFF) | temp;
 		PC++;
 		break;
-
-	case 10:	//$bne
-		if (reg_list[rs] != reg_list[rt]) {
-			PC = (reg_list[rd] & 0x0000FFFF) - 1; //if (R[rs] != R[rt]) pc = R[rd] [low bits 15:0]
-		}
-		PC++;
-		break;
-
-	case 11:	//$jal
-		reg_list[15] = PC + 1; //(next instruction address),
-		PC = reg_list[rd] & 0x0000FFFF;
-
-		break;
-
-	case 12:	//$lw
+		
+	case 8:	//$LD
 		reg_list[rd] = mem[reg_list[rs] + reg_list[rt]];
 		PC++;
 		break;
 
-	case 13:	//$sw
+	case 9:	//$SD
 		mem[reg_list[rs] + reg_list[rt]] = reg_list[rd];
 		PC++;
 		break;
+		
+	case 16: 	//$JLT
+		if (reg_list[rs] <= reg_list[rt]) {
+			PC = imm ; //if (R[rs] <= R[rt]) pc = imm
 
-	case 14:	//$lhi
-		temp = (reg_list[rs] & 0x0000FFFF) << 16;
-		reg_list[rd] = (reg_list[rd] & 0x0000FFFF) | temp;
+		}
 		PC++;
 		break;
 
-	case 15:	//$halt
+	case 17:	//$JLE
+		if (reg_list[rs] <= reg_list[rt]) {
+			PC = imm ; //if (R[rs] <= R[rt]) pc = imm
+
+		}
+		PC++;
+		break;
+		
+	case 18:	//$JEQ
+		if (reg_list[rs] == reg_list[rt]) {
+			PC = imm ; //if (R[rs] == R[rt]) pc = imm
+		}
+		PC++;
+		break;
+
+
+	case 19:	//$JNE
+		if (reg_list[rs] != reg_list[rt]) {
+			PC = imm ; //if (R[rs] != R[rt]) pc = imm
+		}
+		PC++;
+		break;
+
+	case 20:	//$JIN
+		PC = reg_list[rd] & 0x0000FFFF;
+
+		break;
+
+	case 24:	//$HLT
 		gracfullyExit();
 		exit(0);
 		break;
@@ -248,19 +235,6 @@ void printTrace() {
 	fprintf(fp_trace, "\n");
 }
 
-void printRegout(char* regoutPath) {
-	fp_regout = fopen(regoutPath, "wt");
-	if (!fp_regout) {
-		printf(ERR_MSG_OPEN_FILE);
-		puts("regout.txt");
-		exit(-1);
-	}
-	int i;
-	for (i = 2; i < NUM_REGS; i++) {
-		fprintf(fp_regout, "%08X\n", reg_list[i]);
-	}
-	fclose(fp_regout);
-}
 void printMemout(char* memoutPath) {
 	fp_memout = fopen(memoutPath, "wt");
 	if (!fp_memout) {
@@ -276,17 +250,6 @@ void printMemout(char* memoutPath) {
 }
 
 
-void printCount(char* countPath){
-	//Printing count.txt - the number of instructions
-	fp_count = fopen(countPath, "wt");
-	if (!fp_count) {
-		printf(ERR_MSG_OPEN_FILE);
-		puts("count.txt");
-		exit(-1);
-	}
-	fprintf(fp_count, "%d\n", instCnt);
-	fclose(fp_count);
-}
 
 void gracfullyExit() {
 	// close opened files
