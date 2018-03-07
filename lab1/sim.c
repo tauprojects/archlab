@@ -20,7 +20,7 @@ char reg_name[][10] = {"$r0","$r1","$r2","$r3","$r4","$r5","$r6","$r7"};
 int inst, op, rd, rs, rt, PC, instCnt = 0; //global variables - for easy modeling
 
 // files to be read\written
-FILE *fp_memin, *fp_memout, *fp_regout, *fp_trace, *fp_count;
+FILE *fp_memin, *fp_memout, *fp_trace;
 
 short int imm;
 
@@ -226,6 +226,26 @@ void instExec() {
 	}
 
 }
+//Trace Eample
+//	--- instruction 0 (0000) @ PC 0 (0000) -----------------------------------------------------------
+//	pc = 0000, inst = 0088000f, opcode = 0 (ADD), dst = 2, src0 = 1, src1 = 0, immediate = 0000000f
+//	r[0] = 00000000 r[1] = 0000000f r[2] = 00000000 r[3] = 00000000 
+//	r[4] = 00000000 r[5] = 00000000 r[6] = 00000000 r[7] = 00000000 
+//	>>>> EXEC: R[2] = 15 ADD 0 <<<<
+//int inst, op, rd, rs, rt, PC, instCnt = 0;
+void printTrace_new() {
+	fprintf(fp_trace, "--- instrcution %d (%04X) @ PC %d (%04X) -----------------------------------------------------------\n", instCnt, instCnt, PC, PC);
+	fprintf(fp_trace, "pc = %04X, inst = %08X, opcode = %d (ADD), dst = %d, src0 = %d, src1 = %d, immediate = %08X\n", PC,instCnt, op, rd, rs, rt, imm);
+	int i;
+	for (i = 0; i < NUM_REGS; i++) {
+		fprintf(fp_trace, "r[%d] = %08x ", i, reg_list[i]);
+		if(i==3)
+			fprintf(fp_trace, "\n");
+	}
+	fprintf(fp_trace, "\n>>>> EXEC: R[%d] = %d %s %d \n",rd, rs, op_name[op], rt);
+	
+}
+
 void printTrace() {
 	fprintf(fp_trace, "%08X %08X ", PC, inst);
 	int i;
@@ -248,7 +268,6 @@ void printMemout(char* memoutPath) {
 	}
 	fclose(fp_memout);
 }
-
 
 
 void gracfullyExit() {
