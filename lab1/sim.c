@@ -12,17 +12,17 @@ int mem[MEM_SIZE];
 int reg_list[NUM_REGS];
 // opcode names
 char op_name[][10] = { "ADD", "SUB", "LSF", "RSF", "AND", "OR","XOR","LHI",
-		 "LD", "ST","JLT","JLE","JEQ", "JNE", "JIN", "HLT" };
+		 "LD", "ST","JLT","JLE","JEQ", "JNE", "JIN", "HLT" }; //Add empty strings to pad for 24 opcodes
 
 // register names
 char reg_name[][10] = {"$r0","$r1","$r2","$r3","$r4","$r5","$r6","$r7"};
 
-int inst, op, rd, rs, rt, PC, instCnt = 0; //global variables - for easy modeling
+int inst, op, rd, rs, rt, PC, instCnt = 0; //global variables -- rd rs rt to dest src0 src1
+short int imm;
 
 // files to be read\written
 FILE *fp_memin, *fp_memout, *fp_trace;
 
-short int imm;
 
 //Main function
 int main(int argc, char *argv[]) {
@@ -30,11 +30,11 @@ int main(int argc, char *argv[]) {
 	int i, last;
 
 	//Checking if number of arguments is valid
-	if (argc < 6) {
+	if (argc < 4) {
 		printf(ERR_MSG_INVALID_ARGS_NUM);
 		printf("%d\n", argc - 1);
 		exit(-1);
-	} else if (argc > 6) {
+	} else if (argc > 4) {
 		printf(ERR_MSG_INVALID_ARGS_NUM);
 		printf("%d\n", argc - 1);
 		exit(-1);
