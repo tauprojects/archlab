@@ -36,26 +36,14 @@
  * prints the register status into trace.txxt
  * @return - void
  */
-void printTrace();
+void printTrace_new();
 
-/*
- * Print Regout method()
- * prints the finite register states into regout.txxt
- * @return - void
- */
-void printRegout(char* regoutPath);
 /*
  * Print Memout method()
  * prints the  memory state into memout.txt after each instruction execution
  * @return - void
  */
 void printMemout(char* memoutPath);
-/*
- * Print cCount method()
- * prints the Instruction counter into count.txt after each instruction execution
- * @return - void
- */
-void printCount(char* countPath);
 
 /*
  * Instruction Execution method()
@@ -72,14 +60,6 @@ void instExec();
  * @return - x<<n.
  */
 void gracfullyExit();
-
-/*
- * Shift Right Logical method
- * @x - input number to be shifted
- * @n - input shift number.
- * @return - x>>n.
- */
-int logicalRightShift(int x, int n);
 
 /*
  * Shift Right Arithmetic method - with sign extension

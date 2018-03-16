@@ -11,13 +11,11 @@ int mem[MEM_SIZE];
 //Registers
 int reg_list[NUM_REGS];
 // opcode names
-char op_name[][] = { "ADD", "SUB", "LSF", "RSF", "RSF", "AND", "OR", "XOR",
-		"LHI", "LD", "ST", "10", "11", "12", "13", "14", "15", "JLT", };
+char op_name[][25] = { "ADD", "SUB", "LSF", "RSF", "RSF", "AND", "OR", "XOR",
+		"LHI", "LD", "ST", "10", "11", "12", "13", "14", "15", "JLT", "JLE", "JEQ", //filler elements for easy access 
+		"JNE", "JIN", "21", "22", "23", "HLT"};
 
-// register names
-char reg_name[][8] = { "r[0]", "r[1]", "r[2]", "r[3]", "r[4]", "r[5]", "r[6]", "r[7]" };
-
-int inst, opcode, dst, src0, src1, imm, instCnt = 0; //global variables - for easy modeling
+int inst, opcode, dst, src0, src1, instCnt = 0; //global variables - for easy modeling
 short int imm;
 unsigned short int PC = 0;
 
@@ -51,7 +49,7 @@ int main(int argc, char *argv[]) {
 
 
 	//Opening files and validating return value for success
-	fp_memin = fopen(meminPath, "src1");
+	fp_memin = fopen(meminPath, "r");
 	if (!fp_memin) 
 	{
 		printf(ERR_MSG_OPEN_FILE);
@@ -60,7 +58,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	fp_trace = fopen(tracePath, "wt");
+	fp_trace = fopen(tracePath, "w");
 	if (!fp_trace) 
 	{
 		printf(ERR_MSG_OPEN_FILE);
@@ -89,7 +87,6 @@ int main(int argc, char *argv[]) {
 	for (last = MEM_SIZE - 1; last >= 0 && mem[last] == 0; last--);
 
 	//Decode Instruction
-	PC = 0;  //Initial Program Counter
 	while (PC <= last) 
 	{
 		//Fetch Stage
@@ -105,7 +102,7 @@ int main(int argc, char *argv[]) {
 			imm = sbs(inst, 15, 0);
 			reg_list[1] = imm; //load imm to $r1
 
-			if (opcode == 0 && dst == 0) 
+			if (dst == 0) 
 			{
 				PC++;
 			} 
@@ -115,7 +112,7 @@ int main(int argc, char *argv[]) {
 				instCnt++;
 
 				//Print trace.txt
-				printTrace(PC, inst);
+				printTrace_new(PC, inst);
 
 				//Execute Stage
 				instExec();
@@ -239,16 +236,22 @@ void instExec()
 //	r[4] = 00000000 r[5] = 00000000 r[6] = 00000000 r[7] = 00000000 
 //	>>>> EXEC: R[2] = 15 ADD 0 <<<<
 //int inst, op, rd, rs, rt, PC, instCnt = 0;
-void printTrace_new() {
-	fprintf(fp_trace, "--- instrcution %d (%04X) @ PC %d (%04X) -----------------------------------------------------------\n", instCnt, instCnt, PC, PC);
-	fprintf(fp_trace, "pc = %04X, inst = %08X, opcode = %d (ADD), dst = %d, src0 = %d, src1 = %d, immediate = %08X\n", PC,instCnt, op, rd, rs, rt, imm);
+
+void printTrace_new() 
+{
+
+	fprintf(fp_trace, "--- instrcution %d (%04X) @ PC %d (%04X) -----------------------------------------------------------\n", 
+		instCnt, instCnt, PC, PC);
+
+	fprintf(fp_trace, "pc = %04X, inst = %08x, opcode = %d (%s), dst = %d, src0 = %d, src1 = %d, immediate = %08x\n", 
+		PC, instCnt, opcode, op_name[opcode], dst, src0, src1, imm);
 	int i;
 	for (i = 0; i < NUM_REGS; i++) {
 		fprintf(fp_trace, "r[%d] = %08x ", i, reg_list[i]);
 		if(i==3)
 			fprintf(fp_trace, "\n");
 	}
-	fprintf(fp_trace, "\n>>>> EXEC: R[%d] = %d %s %d \n",rd, rs, op_name[op], rt);
+	fprintf(fp_trace, "\n>>>> EXEC: R[%d] = %d %s %d \n",dst, src0, op_name[opcode], src1);
 	
 }
 
