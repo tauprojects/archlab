@@ -11,14 +11,15 @@ int mem[MEM_SIZE];
 //Registers
 int reg_list[NUM_REGS];
 // opcode names
-char op_name[][10] = { "ADD", "SUB", "LSF", "RSF", "AND", "OR","XOR","LHI",
-		 "LD", "ST","JLT","JLE","JEQ", "JNE", "JIN", "HLT" }; //Add empty strings to pad for 24 opcodes
+char op_name[][] = { "ADD", "SUB", "LSF", "RSF", "RSF", "AND", "OR", "XOR",
+		"LHI", "LD", "ST", "10", "11", "12", "13", "14", "15", "JLT", };
 
 // register names
-char reg_name[][10] = {"$r0","$r1","$r2","$r3","$r4","$r5","$r6","$r7"};
+char reg_name[][8] = { "r[0]", "r[1]", "r[2]", "r[3]", "r[4]", "r[5]", "r[6]", "r[7]" };
 
-int inst, op, rd, rs, rt, PC, instCnt = 0; //global variables -- rd rs rt to dest src0 src1
+int inst, opcode, dst, src0, src1, imm, instCnt = 0; //global variables - for easy modeling
 short int imm;
+unsigned short int PC = 0;
 
 // files to be read\written
 FILE *fp_memin, *fp_memout, *fp_trace;
@@ -50,8 +51,9 @@ int main(int argc, char *argv[]) {
 
 
 	//Opening files and validating return value for success
-	fp_memin = fopen(meminPath, "rt");
-	if (!fp_memin) {
+	fp_memin = fopen(meminPath, "src1");
+	if (!fp_memin) 
+	{
 		printf(ERR_MSG_OPEN_FILE);
 		puts("memin.txt");
 		exit(-1);
@@ -59,7 +61,8 @@ int main(int argc, char *argv[]) {
 
 
 	fp_trace = fopen(tracePath, "wt");
-	if (!fp_trace) {
+	if (!fp_trace) 
+	{
 		printf(ERR_MSG_OPEN_FILE);
 		puts("trace.txt");
 		exit(-1);
@@ -73,7 +76,8 @@ int main(int argc, char *argv[]) {
 
 	//Read memin.txt content into memory map
 	i = 0;
-	while (!feof(fp_memin)) {
+	while (!feof(fp_memin)) 
+	{
 		if (fscanf(fp_memin, "%08X\n", &mem[i]) != 1)
 			break;
 		i++;
@@ -82,30 +86,31 @@ int main(int argc, char *argv[]) {
 	fclose(fp_memin);
 
 	//Find last non-zero memory entry
-	last = MEM_SIZE - 1;
-	while (last >= 0 && mem[last] == 0)
-		last--;
+	for (last = MEM_SIZE - 1; last >= 0 && mem[last] == 0; last--);
 
 	//Decode Instruction
 	PC = 0;  //Initial Program Counter
-	while (PC <= last) {
+	while (PC <= last) 
+	{
 		//Fetch Stage
 		inst = mem[PC];
 		//print non zero contents
-		if (inst != 0) {
-
+		if (inst != 0) 
+		{
 			//Decode Stage
-			op = sbs(inst, 29, 25);
-			rd = sbs(inst, 24, 22);
-			rs = sbs(inst, 21, 19);
-			rt = sbs(inst, 18, 16);
+			opcode = sbs(inst, 29, 25);
+			dst = sbs(inst, 24, 22);
+			src0 = sbs(inst, 21, 19);
+			src1 = sbs(inst, 18, 16);
 			imm = sbs(inst, 15, 0);
 			reg_list[1] = imm; //load imm to $r1
 
-			if (op == 0 && rd == 0) {
+			if (opcode == 0 && dst == 0) 
+			{
 				PC++;
-			} else {
-
+			} 
+			else 
+			{
 				//Instruction Counter Increment
 				instCnt++;
 
@@ -120,7 +125,8 @@ int main(int argc, char *argv[]) {
 
 			}
 		}
-		else{
+		else
+		{
 			PC++;
 		}
 	}
@@ -129,101 +135,101 @@ int main(int argc, char *argv[]) {
 
 }
 
-void instExec() {
+void instExec() 
+{
 	unsigned int temp;
-	switch (op) {
-	case 0:		 //$ADD
-		reg_list[rd] = reg_list[rs] + reg_list[rt];
-		PC++;
+	switch (opcode) 
+	{
+	case 0:		 //ADD
+		reg_list[dst] = reg_list[src0] + reg_list[src1];
 		break;
 
-	case 1:		//$SUB
-		reg_list[rd] = reg_list[rs] - reg_list[rt];
-		PC++;
+	case 1:		//SUB
+		reg_list[dst] = reg_list[src0] - reg_list[src1];
+		break;
+
+	case 2:		//LSF
+		reg_list[dst] = logicalLeftShift(reg_list[src0], reg_list[src1]);
+		break;
+
+	case 3:		//RSF
+		reg_list[dst] = arithmeticRightShift(reg_list[src0], reg_list[src1]);
+		break;
+
+	case 4:		//AND
+		reg_list[dst] = reg_list[src0] & reg_list[src1];
+		break;
+
+	case 5:		//OR
+		reg_list[dst] = reg_list[src0] | reg_list[src1];
+		break;
+
+	case 6:		//XOR
+		reg_list[dst] = reg_list[src0] ^ reg_list[src1];
 		break;
 		
-	case 2:		//$LSF
-		reg_list[rd] = logicalLeftShift(reg_list[rs], reg_list[rt]);
-		PC++;
-		break;
-
-	case 3:		//$RSF
-		reg_list[rd] = arithmeticRightShift(reg_list[rs], reg_list[rt]);
-		PC++;
-		break;
-
-	case 4:		//$AND
-		reg_list[rd] = reg_list[rs] & reg_list[rt];
-		PC++;
-		break;
-
-	case 5:		//$OR
-		reg_list[rd] = reg_list[rs] | reg_list[rt];
-		PC++;
-		break;
-
-	case 6:		//$XOR
-		reg_list[rd] = reg_list[rs] ^ reg_list[rt];
-		PC++;
-		break;
-		
-	case 7:	//$LHI
+	case 7:	   //LHI
 		temp = ((int)imm & 0x0000FFFF) << 16;
-		reg_list[rd] = (reg_list[rd] & 0x0000FFFF) | temp;
-		PC++;
-		break;
-		
-	case 8:	//$LD
-		reg_list[rd] = mem[reg_list[rs] + reg_list[rt]];
-		PC++;
+		reg_list[dst] = (reg_list[dst] & 0x0000FFFF) | temp;
 		break;
 
-	case 9:	//$SD
-		mem[reg_list[rs] + reg_list[rt]] = reg_list[rd];
-		PC++;
+	case 8:		//LD
+		reg_list[dst] = mem[reg_list[src1]];
 		break;
-		
-	case 16: 	//$JLT
-		if (reg_list[rs] <= reg_list[rt]) {
-			PC = imm ; //if (R[rs] <= R[rt]) pc = imm
 
+	case 9:		//ST
+		mem[reg_list[src1]] = reg_list[src0];
+		break;
+
+	case 16:	//JLT
+		if (reg_list[src0] < reg_list[src1]) 
+		{
+			reg_list[7] = PC;
+			PC = imm; 
 		}
-		PC++;
 		break;
 
-	case 17:	//$JLE
-		if (reg_list[rs] <= reg_list[rt]) {
-			PC = imm ; //if (R[rs] <= R[rt]) pc = imm
-
+	case 17:	//JLE
+		if (reg_list[src0] <= reg_list[src1])
+		{
+			reg_list[7] = PC;
+			PC = imm;
 		}
-		PC++;
-		break;
-		
-	case 18:	//$JEQ
-		if (reg_list[rs] == reg_list[rt]) {
-			PC = imm ; //if (R[rs] == R[rt]) pc = imm
-		}
-		PC++;
 		break;
 
-
-	case 19:	//$JNE
-		if (reg_list[rs] != reg_list[rt]) {
-			PC = imm ; //if (R[rs] != R[rt]) pc = imm
+	case 18:	//JEQ
+		if (reg_list[src0] == reg_list[src1])
+		{
+			reg_list[7] = PC;
+			PC = imm;
 		}
-		PC++;
+		break;
+
+	case 19:	//JEQ
+		if (reg_list[src0] != reg_list[src1])
+		{
+			reg_list[7] = PC;
+			PC = imm;
+		}
 		break;
 
 	case 20:	//$JIN
-		PC = reg_list[rd] & 0x0000FFFF;
-
+		reg_list[7] = PC;
+		PC = reg_list[dst] & 0x0000FFFF;
 		break;
 
-	case 24:	//$HLT
+	case 24:	//HALT
 		gracfullyExit();
 		exit(0);
 		break;
+
+	default:
+		break;
 	}
+
+	if (opcode <= 9)
+		PC++;
+
 
 }
 //Trace Eample
@@ -276,27 +282,29 @@ void gracfullyExit() {
 	puts("Exited Gracefully");
 }
 
-int logicalRightShift(int x, int n) {
-	return (unsigned) x >> n;
-}
-int arithmeticRightShift(int x, int n) {
+int arithmeticRightShift(int x, int n) 
+{
 	if (x < 0 && n > 0)
 		return x >> n | ~(~0U >> n);
 	else
 		return x >> n;
 }
-int logicalLeftShift(int x, int n) {
+int logicalLeftShift(int x, int n) 
+{
 	return (unsigned) x << n;
 }
 
 // extract single bit
-int sb(int x, int bit) {
+int sb(int x, int bit) 
+{
 	return (x >> bit) & 1;
 }
 
 // extract multiple bits
-int sbs(int x, int msb, int lsb) {
+int sbs(int x, int msb, int lsb) 
+{
 	if (msb == 31 && lsb == 0)
 		return x;
+
 	return (x >> lsb) & ((1 << (msb - lsb + 1)) - 1);
 }

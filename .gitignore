@@ -1,3 +1,10 @@
 lab1/a.out
 lab1/temp/*
 lab1/sim.o
+*.ipch
+*.tlog
+*.pdb
+*.idb
+*.log
+/.vs/archlab/v15
+/x64/Release

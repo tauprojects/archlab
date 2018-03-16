@@ -6,10 +6,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 // Memory Size = 65535
