@@ -41,7 +41,7 @@ static void asm_cmd(int opcode, int dst, int src0, int src1, int immediate)
 static void assemble_program(char *program_name)
 {
 	FILE *fp;
-	int addr, i, last_addr;
+	int addr, last_addr;
 
 	for (addr = 0; addr < MEM_SIZE; addr++)
 		mem[addr] = 0;
@@ -51,26 +51,28 @@ static void assemble_program(char *program_name)
 	/*
 	 * Program starts here
 	 */
-	asm_cmd(ADD, 2, 1, 0, 15);// 0: R2 = 15
-	asm_cmd(ADD, 3, 1, 0, 1); // 1: 
-	asm_cmd(ADD, 4, 1, 0, 8); // 2: 
-	asm_cmd(JEQ, 0, 3, 4, 11); // 3:
-	asm_cmd(LD,  5, 0, 2, 0); // 4:
-	asm_cmd(ADD, 2, 2, 1, 1); // 5:
-	asm_cmd(LD,  6, 0, 2, 0); // 6:
-	asm_cmd(ADD, 6, 6, 5, 0); // 7:
-	asm_cmd(ST,  0, 6, 2, 0); // 8:
-	asm_cmd(ADD, 3, 3, 1, 1); // 9:
-	asm_cmd(JEQ, 0, 0, 0, 3); // 10:
-	asm_cmd(HLT, 0, 0, 0, 0); // 11:
+		asm_cmd(LD	,3, 0, 1, 1000);		// 3 = Mem[1000] = x
+		asm_cmd(LD	,4, 0, 1, 1001);		// 4 = Mem[1001] = y
+		asm_cmd(ADD ,2,	0, 1, 1	);			// 2 = mask = 1
+		asm_cmd(ADD ,5, 0, 1, 32	);		// 5 = i = 32
+		asm_cmd(ADD ,6, 0, 0, 0	);			// 6 = 0 --> result
+		asm_cmd(AND ,7, 2, 3, 0	);			// 5 = x & 2
+		asm_cmd(JEQ ,0, 0, 7, 8	);			// if 5==0 goto shift
+		asm_cmd(ADD ,6, 6, 4, 0	);			// else, do addition: result += y
+		asm_cmd(LSF ,2, 2, 1, 1	);			// mask << 1
+		asm_cmd(LSF ,4, 4, 1, 1	);			// y << 1
+		asm_cmd(SUB ,5, 5, 1, 1	);			// i--
+		asm_cmd(JLT ,0, 0, 5, 5	);			// if i > 0 goto loop
+		asm_cmd(ST  ,0, 6, 1, 1002);		// Mem[1002] = result
+		asm_cmd(HLT ,0, 0, 0, 0);
 	
 	/* 
 	 * Constants are planted into the memory somewhere after the program code:
 	 */
-	for (i = 0; i < 8; i++)
-		mem[15+i] = i;
+	mem[1000] = -7658;
+	mem[1001] = -9999;
 
-	last_addr = 23;
+	last_addr = 1002;
 
 	fp = fopen(program_name, "w");
 	if (fp == NULL) {

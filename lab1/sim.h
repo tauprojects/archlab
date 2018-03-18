@@ -27,6 +27,26 @@
 #define ERR_MSG_OPEN_FILE "Error While Opening File: "
 
 
+typedef enum _OPCODE 
+{
+	ADD = 0,
+	SUB,
+	LSF,
+	RSF,
+	AND,
+	OR,
+	XOR,
+	LHI,
+	LD,
+	ST,
+	JLT = 16,
+	JLE,
+	JEQ,
+	JNE,
+	JIN,
+	HLT = 24
+} OPCODE;
+
 /////////////////////////
 //Function Declarations//
 /////////////////////////

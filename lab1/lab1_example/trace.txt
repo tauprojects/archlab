@@ -1,5 +1,3 @@
-program example.bin loaded, 23 lines
-
 --- instruction 0 (0000) @ PC 0 (0000) -----------------------------------------------------------
 pc = 0000, inst = 0088000f, opcode = 0 (ADD), dst = 2, src0 = 1, src1 = 0, immediate = 0000000f
 r[0] = 00000000 r[1] = 0000000f r[2] = 00000000 r[3] = 00000000 

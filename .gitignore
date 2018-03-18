@@ -8,3 +8,5 @@ lab1/sim.o
 *.log
 /.vs/archlab/v15
 /x64/Release
+/x64/Debug
+/archlab.vcxproj.user
