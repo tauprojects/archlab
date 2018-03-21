@@ -51,28 +51,36 @@ static void assemble_program(char *program_name)
 	/*
 	 * Program starts here
 	 */
-		asm_cmd(LD	,3, 0, 1, 1000);		// 3 = Mem[1000] = x
-		asm_cmd(LD	,4, 0, 1, 1001);		// 4 = Mem[1001] = y
-		asm_cmd(ADD ,2,	0, 1, 1	);			// 2 = mask = 1
-		asm_cmd(ADD ,5, 0, 1, 32	);		// 5 = i = 32
-		asm_cmd(ADD ,6, 0, 0, 0	);			// 6 = 0 --> result
-		asm_cmd(AND ,7, 2, 3, 0	);			// 5 = x & 2
-		asm_cmd(JEQ ,0, 0, 7, 8	);			// if 5==0 goto shift
-		asm_cmd(ADD ,6, 6, 4, 0	);			// else, do addition: result += y
-		asm_cmd(LSF ,2, 2, 1, 1	);			// mask << 1
-		asm_cmd(LSF ,4, 4, 1, 1	);			// y << 1
-		asm_cmd(SUB ,5, 5, 1, 1	);			// i--
-		asm_cmd(JLT ,0, 0, 5, 5	);			// if i > 0 goto loop
-		asm_cmd(ST  ,0, 6, 1, 1002);		// Mem[1002] = result
-		asm_cmd(HLT ,0, 0, 0, 0);
+asm_cmd(ADD	,4, 0, 1, 10		);
+asm_cmd(JEQ ,0, 4, 0, 6          );
+asm_cmd(ADD ,2, 4, 1, 1999		);
+asm_cmd(ST	,0, 4, 2, 0			);
+asm_cmd(SUB ,4, 4, 1, 1			);
+asm_cmd(JIN ,0, 1, 0, 1       );
+asm_cmd(ADD ,2, 0, 1, 2010           );
+asm_cmd(ADD ,3, 0, 1, 1			);
+asm_cmd(ADD ,7, 0, 1, 10             );
+asm_cmd(JEQ ,0, 3, 7, 23		);
+asm_cmd(ADD ,4, 0, 0, 0			);
+asm_cmd(ADD ,7, 0, 1, 10			);
+asm_cmd(JEQ ,0, 4, 7, 21	);
+asm_cmd(SUB ,7, 2, 1, 10			);
+asm_cmd(LD  ,7, 0, 7, 0			);
+asm_cmd(ADD ,7, 7, 4, 0			);
+asm_cmd(ADD ,7, 7, 1, 1			);
+asm_cmd(ST  ,0, 7, 2, 0			);
+asm_cmd(ADD ,4, 4, 1, 1			);
+asm_cmd(ADD, 2, 2, 1, 1			);
+asm_cmd(JIN	,0, 1, 0, 11        );
+asm_cmd(ADD ,3, 3, 1, 1			);
+asm_cmd(JIN	,0, 1, 0, 8		);
+asm_cmd(HLT ,0, 0, 0, 0			);
 	
 	/* 
 	 * Constants are planted into the memory somewhere after the program code:
 	 */
-	mem[1000] = -7658;
-	mem[1001] = -9999;
 
-	last_addr = 1002;
+	last_addr = 50;
 
 	fp = fopen(program_name, "w");
 	if (fp == NULL) {

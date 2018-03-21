@@ -294,7 +294,7 @@ void printTrace_new()
 		break;
 
 	case LD:
-		fprintf(fp_trace, "\n\n>>>> EXEC: R[%d] = MEM[%d] = 0x%08x (%d) <<<<\n\n", dst, reg_list[src1], mem[imm], mem[imm]);
+		fprintf(fp_trace, "\n\n>>>> EXEC: R[%d] = MEM[%d] = 0x%08x (%d) <<<<\n\n", dst, reg_list[src1], mem[reg_list[src1]], mem[reg_list[src1]]);
 		break;
 
 	case ST:

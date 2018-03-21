@@ -1,0 +1,24 @@
+
+int result;
+int row;
+int col;
+int address;
+
+row = 0;
+while(row < 10)
+{
+	col = 0;
+	while(col < 10)
+	{
+		result = mult(row, col);
+		// address = 2000 + row * 10 + col
+		address = row << 3;
+		address += row;
+		address += row;
+		address += col;
+		address += 2000;
+		mem[address] = result;
+		col++;
+	}
+row++;
+}

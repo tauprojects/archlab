@@ -10,3 +10,4 @@ lab1/sim.o
 /x64/Release
 /x64/Debug
 /archlab.vcxproj.user
+/.vs
