@@ -11,3 +11,4 @@
 		asm_cmd(SUB ,5, 5, 1, 1	);			// i--
 		asm_cmd(JLT ,0, 0, 5, 5	);			// if i > 0 goto loop
 		asm_cmd(ST  ,0, 6, 1, 1002);			// Mem[1002] = result
+		asm_cmd(HLT, 0, 0, 0, 0);				//HALT

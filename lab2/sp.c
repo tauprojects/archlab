@@ -143,7 +143,7 @@ int logicalLeftShift(int x, int n)
 	return (unsigned)x << n;
 }
 
-static void sp_instExec(sp_t *sp)
+static void sp_instExec0(sp_t *sp)
 {
 	sp_registers_t *spro = sp->spro;
 	sp_registers_t *sprn = sp->sprn;
@@ -168,15 +168,15 @@ static void sp_instExec(sp_t *sp)
 		break;
 
 	case AND:		//AND
-		sprn->aluout = reg_list[src0] & spro->alu1;
+		sprn->aluout = spro->alu0 & spro->alu1;
 		break;
 
 	case OR:		//OR
-		sprn->aluout = reg_list[src0] | spro->alu1;
+		sprn->aluout = spro->alu0 | spro->alu1;
 		break;
 
 	case XOR:		//XOR
-		sprn->aluout = reg_list[src0] ^ spro->alu1;
+		sprn->aluout = spro->alu0 ^ spro->alu1;
 		break;
 
 	case LHI:	   //LHI
@@ -195,7 +195,9 @@ static void sp_instExec(sp_t *sp)
 	case JLT:		//JLT
 		if (spro->r[spro->src0] < spro->r[spro->src1])
 		{
+			sprn->r[7] = spro->pc;
 			sprn->aluout = 1;
+			sprn->pc = spro->immediate;
 		}
 		else
 		{
@@ -206,7 +208,9 @@ static void sp_instExec(sp_t *sp)
 	case JLE:	//JLE
 		if (spro->r[spro->src0] <= spro->r[spro->src1])
 		{
+			sprn->r[7] = spro->pc;
 			sprn->aluout = 1;
+			sprn->pc = spro->immediate;
 		}
 		else
 		{
@@ -217,7 +221,9 @@ static void sp_instExec(sp_t *sp)
 	case JEQ:	//JEQ
 		if (spro->r[spro->src0] == spro->r[spro->src1])
 		{
+			sprn->r[7] = spro->pc;
 			sprn->aluout = 1;
+			sprn->pc = spro->immediate;
 		}
 		else
 		{
@@ -228,7 +234,9 @@ static void sp_instExec(sp_t *sp)
 	case JNE:	//JNE
 		if (spro->r[spro->src0] != spro->r[spro->src1])
 		{
+			sprn->r[7] = spro->pc;
 			sprn->aluout = 1;
+			sprn->pc = spro->immediate;
 		}
 		else
 		{
@@ -239,6 +247,7 @@ static void sp_instExec(sp_t *sp)
 	case JIN:	//JIN
 		sprn->r[7] = spro->pc;
 		sprn->pc = spro->r[spro->src0] & 0x0000FFFF;
+		sprn->aluout = 1;
 		break;
 
 	default:
@@ -246,6 +255,114 @@ static void sp_instExec(sp_t *sp)
 	}
 
 
+}
+
+int sp_instExec1(sp_t *sp)
+{
+	sp_registers_t *spro = sp->spro;
+	sp_registers_t *sprn = sp->sprn;
+	
+	int ret_state = CTL_STATE_FETCH0;
+
+	switch (spro->opcode)
+	{
+	case HLT:
+		ret_state = CTL_STATE_IDLE;
+		dump_sram(sp);
+		llsim_stop();
+		break;
+	case LD:
+		sprn->r[spro->dst] = llsim_mem_extract_dataout(sp->sram, 31, 0);
+		sprn->pc = spro->pc + 1;
+		break;
+	case ST:
+		llsim_mem_write(sp->sram, spro->r[spro->src1] & 0x0000FFFF);
+		sprn->pc = spro->pc + 1;
+		break;
+
+	case JEQ:
+	case JLE:
+	case JLT:
+	case JNE:
+	case JIN:
+		if (spro->aluout == 0)
+		{
+			sprn->pc = spro->pc + 1;
+		}
+		break;
+
+	default:
+		sprn->r[spro->dst] = spro->aluout;
+		sprn->pc = spro->pc + 1;
+		break;
+	}
+
+	return ret_state;
+}
+
+void sp_printInstTrace(sp_t* sp)
+{
+	int i;
+	sp_registers_t *spro = sp->spro;
+	sp_registers_t *sprn = sp->sprn;
+
+#define mem(addr) llsim_mem_extract(sp->sram, (addr), 31, 0)
+
+	fprintf(inst_trace_fp, "--- instruction %d (%04x) @ PC %d (%04d) -----------------------------------------------------------\n",
+		nr_simulated_instructions - 1, nr_simulated_instructions - 1, spro->pc, spro->pc);
+
+	fprintf(inst_trace_fp, "pc = %04d, inst = %08x, opcode = %d (%s), dst = %d, src0 = %d, src1 = %d, immediate = %08x\n",
+		spro->pc, mem(spro->pc), 
+		spro->opcode, opcode_name[spro->opcode], 
+		spro->dst, spro->src0, spro->src1, spro->immediate);
+
+	for (i = 0; i < 8; i++)
+	{
+		fprintf(inst_trace_fp, "r[%d] = %08x ", i, spro->r[i]);
+
+		if (i == 3)
+		{
+			fprintf(inst_trace_fp, "\n");
+		}
+	}
+
+	switch (spro->opcode)
+	{
+	case ADD:
+	case SUB:
+	case LSF:
+	case RSF:
+	case AND:
+	case OR:
+	case XOR:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: R[%d] = %d %s %d <<<<\n\n", spro->dst, spro->r[spro->src0], opcode_name[spro->opcode], spro->r[spro->src1]);
+		break;
+
+	case LHI:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: R[%d] = 0x%08X %s 0x%04X <<<<\n\n", spro->dst, spro->r[spro->dst], opcode_name[spro->opcode], spro->immediate & 0x0000FFFF);
+		break;
+
+	case LD:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: R[%d] = MEM[%d] = 0x%08x (%d) <<<<\n\n", spro->dst, spro->r[spro->src1], mem(spro->r[spro->src1]), mem(spro->r[spro->src1]));
+		break;
+
+	case ST:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: MEM[%d] = R[%d] = 0x%08x (%d)<<<<\n\n", spro->r[spro->src1], spro->src0, spro->r[spro->src0], spro->r[spro->src0]);
+		break;
+
+	case JLT:
+	case JLE:
+	case JEQ:
+	case JNE:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: %s %d, %d, %d <<<<\n\n", opcode_name[spro->opcode], spro->r[spro->src0], spro->r[spro->src1], spro->immediate);
+		break;
+	case JIN:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: %s %d <<<<\n\n", opcode_name[spro->opcode], spro->r[spro->src0]);
+		break;
+	case HLT:
+		fprintf(inst_trace_fp, "\n\n>>>> EXEC: HALT at PC %04x <<<<\n\n", spro->pc);
+		break;
+	}
 }
 
 static void sp_ctl(sp_t *sp)
@@ -282,6 +399,7 @@ static void sp_ctl(sp_t *sp)
 		break;
 
 	case CTL_STATE_FETCH0:
+		nr_simulated_instructions++;
 		llsim_mem_read(sp->sram, spro->pc);
 		sprn->ctl_state = CTL_STATE_FETCH1;
 		break;
@@ -305,6 +423,9 @@ static void sp_ctl(sp_t *sp)
 		break;
 
 	case CTL_STATE_DEC1:
+
+		sp_printInstTrace(sp);
+
 		if (spro->opcode < LHI ||
 			(spro->opcode >= JLT && spro->opcode <= JNE))
 		{
@@ -321,14 +442,12 @@ static void sp_ctl(sp_t *sp)
 		break;
 
 	case CTL_STATE_EXEC0:
-		instExec(sp);
+		sp_instExec0(sp);
 		sprn->ctl_state = CTL_STATE_EXEC1;
 		break;
 
 	case CTL_STATE_EXEC1:
-		/***********************************
-		 * TODO: fill here
-		 **********************************/
+		sprn->ctl_state = sp_instExec1(sp);
 		break;
 	}
 }

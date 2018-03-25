@@ -75,12 +75,11 @@ asm_cmd(JIN	,0, 1, 0, 11        );
 asm_cmd(ADD ,3, 3, 1, 1			);
 asm_cmd(JIN	,0, 1, 0, 8		);
 asm_cmd(HLT ,0, 0, 0, 0			);
-	
 	/* 
 	 * Constants are planted into the memory somewhere after the program code:
 	 */
-
-	last_addr = 50;
+	
+	last_addr = 24;
 
 	fp = fopen(program_name, "w");
 	if (fp == NULL) {

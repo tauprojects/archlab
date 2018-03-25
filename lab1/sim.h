@@ -69,9 +69,9 @@ void printMemout(char* memoutPath);
  * Instruction Execution method()
  * execute a current instruction - using switch-case
  * works with and modify  global variables
- * @return - void
+ * @return - 1 if halt, 0 otherwise
  */
-void instExec();
+int instExec();
 
 /*
  * Shift Right Logical method
